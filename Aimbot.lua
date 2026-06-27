@@ -21,6 +21,24 @@ ScreenGui.Name = "AimAssistSystem"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
+local OpenButton = Instance.new("TextButton")
+OpenButton.Name = "OpenMenuButton"
+OpenButton.Size = UDim2.new(0, 70, 0, 30)
+OpenButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+OpenButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+OpenButton.Text = "MỞ MENU"
+OpenButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+OpenButton.TextSize = 12
+OpenButton.Font = Enum.Font.SourceSansBold
+OpenButton.Visible = false
+OpenButton.Active = true
+OpenButton.Draggable = true
+OpenButton.Parent = ScreenGui
+
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(0, 6)
+OpenCorner.Parent = OpenButton
+
 local MenuFrame = Instance.new("Frame")
 MenuFrame.Name = "ControlMenu"
 MenuFrame.Size = UDim2.new(0, 240, 0, 180)
@@ -99,6 +117,12 @@ local InputCorner = Instance.new("UICorner")
 InputCorner.CornerRadius = UDim.new(0, 6)
 InputCorner.Parent = FOVInput
 
+-- Hàm xử lý đóng/mở đồng bộ giữa Menu và Nút mở lại
+local function setMenuVisible(visible)
+	MenuFrame.Visible = visible
+	OpenButton.Visible = not visible
+end
+
 ToggleButton.MouseButton1Click:Connect(function()
 	aimbotEnabled = not aimbotEnabled
 	if aimbotEnabled then
@@ -119,14 +143,18 @@ FOVInput:GetPropertyChangedSignal("Text"):Connect(function()
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-	MenuFrame.Visible = false
+	setMenuVisible(false)
+end)
+
+OpenButton.MouseButton1Click:Connect(function()
+	setMenuVisible(true)
 end)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
 	
 	if input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.RightShift then
-		MenuFrame.Visible = not MenuFrame.Visible
+		setMenuVisible(not MenuFrame.Visible)
 	elseif input.KeyCode == Enum.KeyCode.Delete then
 		RunService:UnbindFromRenderStep("FOVUpdate")
 		FOVring:Remove()
