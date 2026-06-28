@@ -117,7 +117,6 @@ local InputCorner = Instance.new("UICorner")
 InputCorner.CornerRadius = UDim.new(0, 6)
 InputCorner.Parent = FOVInput
 
--- Hàm xử lý đóng/mở đồng bộ giữa Menu và Nút mở lại
 local function setMenuVisible(visible)
 	MenuFrame.Visible = visible
 	OpenButton.Visible = not visible
@@ -192,6 +191,9 @@ local function getClosestPlayerInFOV(trg_part)
 	local nearest = nil
 	local last = math.huge
 	local playerMousePos = Camera.ViewportSize / 2
+	
+	local myCharacter = LocalPlayer.Character
+	local myRoot = myCharacter and myCharacter:FindFirstChild("HumanoidRootPart")
 
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player ~= LocalPlayer then
@@ -200,12 +202,19 @@ local function getClosestPlayerInFOV(trg_part)
 				local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
 				if humanoid and humanoid.Health > 0 then
 					local ePos, onScreen = Camera:WorldToViewportPoint(part.Position)
-					local distance = (Vector2.new(ePos.X, ePos.Y) - playerMousePos).Magnitude
+					local screenDistance = (Vector2.new(ePos.X, ePos.Y) - playerMousePos).Magnitude
 
-					if distance < last and onScreen and distance < fovRadius then
-						if isVisibleByRaycast(part, player.Character) then
-							last = distance
-							nearest = player
+					-- Kiểm tra mục tiêu nằm trong vòng tròn FOV trước
+					if screenDistance < fovRadius and onScreen then
+						-- Tính khoảng cách 3D thực tế trong không gian game từ mình tới địch
+						local distance3D = myRoot and (part.Position - myRoot.Position).Magnitude or (part.Position - Camera.CFrame.Position).Magnitude
+
+						-- Chọn người có khoảng cách 3D gần nhất thay vì gần tâm chuột nhất
+						if distance3D < last then
+							if isVisibleByRaycast(part, player.Character) then
+								last = distance3D
+								nearest = player
+							end
 						end
 					end
 				end
@@ -232,4 +241,3 @@ RunService.RenderStepped:Connect(function()
 		FOVring.Transparency = 0.1
 	end
 end)
-
