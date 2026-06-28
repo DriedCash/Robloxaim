@@ -5,6 +5,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local aimbotEnabled = false
+local espEnabled = false
 local fovRadius = 40
 local maxTransparency = 0.1
 
@@ -41,7 +42,7 @@ OpenCorner.Parent = OpenButton
 
 local MenuFrame = Instance.new("Frame")
 MenuFrame.Name = "ControlMenu"
-MenuFrame.Size = UDim2.new(0, 240, 0, 180)
+MenuFrame.Size = UDim2.new(0, 240, 0, 230)
 MenuFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
 MenuFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
 MenuFrame.BorderSizePixel = 0
@@ -57,7 +58,7 @@ local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, -40, 0, 40)
 Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "🎯 AIM ASSIST MENU"
+Title.Text = "🎯 AIM & ESP MENU"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 15
 Title.Font = Enum.Font.SourceSansBold
@@ -80,7 +81,7 @@ CloseCorner.Parent = CloseButton
 
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Size = UDim2.new(0.85, 0, 0, 40)
-ToggleButton.Position = UDim2.new(0.075, 0, 0.28, 0)
+ToggleButton.Position = UDim2.new(0.075, 0, 0, 45)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60) 
 ToggleButton.Text = "Aimbot: TẮT"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -92,9 +93,23 @@ local BtnCorner = Instance.new("UICorner")
 BtnCorner.CornerRadius = UDim.new(0, 6)
 BtnCorner.Parent = ToggleButton
 
+local ESPButton = Instance.new("TextButton")
+ESPButton.Size = UDim2.new(0.85, 0, 0, 40)
+ESPButton.Position = UDim2.new(0.075, 0, 0, 95)
+ESPButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60) 
+ESPButton.Text = "ESP (Nhìn xuyên): TẮT"
+ESPButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ESPButton.TextSize = 14
+ESPButton.Font = Enum.Font.SourceSansBold
+ESPButton.Parent = MenuFrame
+
+local ESPBtnCorner = Instance.new("UICorner")
+ESPBtnCorner.CornerRadius = UDim.new(0, 6)
+ESPBtnCorner.Parent = ESPButton
+
 local FOVLabel = Instance.new("TextLabel")
 FOVLabel.Size = UDim2.new(0.85, 0, 0, 20)
-FOVLabel.Position = UDim2.new(0.075, 0, 0.58, 0)
+FOVLabel.Position = UDim2.new(0.075, 0, 0, 145)
 FOVLabel.BackgroundTransparency = 1
 FOVLabel.Text = "Kích thước vòng tròn FOV:"
 FOVLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -105,7 +120,7 @@ FOVLabel.Parent = MenuFrame
 
 local FOVInput = Instance.new("TextBox")
 FOVInput.Size = UDim2.new(0.85, 0, 0, 35)
-FOVInput.Position = UDim2.new(0.075, 0, 0.72, 0)
+FOVInput.Position = UDim2.new(0.075, 0, 0, 170)
 FOVInput.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
 FOVInput.Text = tostring(fovRadius)
 FOVInput.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -122,6 +137,35 @@ local function setMenuVisible(visible)
 	OpenButton.Visible = not visible
 end
 
+local renderConnection
+
+local function addESP(player)
+	if player == LocalPlayer then return end
+	local char = player.Character
+	if char and espEnabled then
+		if not char:FindFirstChild("PlayerESP_Highlight") then
+			local highlight = Instance.new("Highlight")
+			highlight.Name = "PlayerESP_Highlight"
+			highlight.FillColor = Color3.fromRGB(255, 0, 0)
+			highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+			highlight.FillTransparency = 0.5
+			highlight.OutlineTransparency = 0
+			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			highlight.Parent = char
+		end
+	end
+end
+
+local function removeESP(player)
+	local char = player.Character
+	if char then
+		local highlight = char:FindFirstChild("PlayerESP_Highlight")
+		if highlight then
+			highlight:Destroy()
+		end
+	end
+end
+
 ToggleButton.MouseButton1Click:Connect(function()
 	aimbotEnabled = not aimbotEnabled
 	if aimbotEnabled then
@@ -130,6 +174,23 @@ ToggleButton.MouseButton1Click:Connect(function()
 	else
 		ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60) 
 		ToggleButton.Text = "Aimbot: TẮT"
+	end
+end)
+
+ESPButton.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+	if espEnabled then
+		ESPButton.BackgroundColor3 = Color3.fromRGB(60, 180, 60) 
+		ESPButton.Text = "ESP (Nhìn xuyên): BẬT"
+		for _, player in ipairs(Players:GetPlayers()) do
+			addESP(player)
+		end
+	else
+		ESPButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60) 
+		ESPButton.Text = "ESP (Nhìn xuyên): TẮT"
+		for _, player in ipairs(Players:GetPlayers()) do
+			removeESP(player)
+		end
 	end
 end)
 
@@ -155,8 +216,11 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.RightShift then
 		setMenuVisible(not MenuFrame.Visible)
 	elseif input.KeyCode == Enum.KeyCode.Delete then
-		RunService:UnbindFromRenderStep("FOVUpdate")
+		if renderConnection then renderConnection:Disconnect() end
 		FOVring:Remove()
+		for _, player in ipairs(Players:GetPlayers()) do
+			removeESP(player)
+		end
 	end
 end)
 
@@ -204,12 +268,9 @@ local function getClosestPlayerInFOV(trg_part)
 					local ePos, onScreen = Camera:WorldToViewportPoint(part.Position)
 					local screenDistance = (Vector2.new(ePos.X, ePos.Y) - playerMousePos).Magnitude
 
-					-- Kiểm tra mục tiêu nằm trong vòng tròn FOV trước
 					if screenDistance < fovRadius and onScreen then
-						-- Tính khoảng cách 3D thực tế trong không gian game từ mình tới địch
 						local distance3D = myRoot and (part.Position - myRoot.Position).Magnitude or (part.Position - Camera.CFrame.Position).Magnitude
 
-						-- Chọn người có khoảng cách 3D gần nhất thay vì gần tâm chuột nhất
 						if distance3D < last then
 							if isVisibleByRaycast(part, player.Character) then
 								last = distance3D
@@ -224,7 +285,23 @@ local function getClosestPlayerInFOV(trg_part)
 	return nearest
 end
 
-RunService.RenderStepped:Connect(function()
+local function setupPlayer(player)
+	player.CharacterAdded:Connect(function(char)
+		char:WaitForChild("HumanoidRootPart", 5)
+		if espEnabled then
+			task.defer(function()
+				addESP(player)
+			end)
+		end
+	end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+	setupPlayer(player)
+end
+Players.PlayerAdded:Connect(setupPlayer)
+
+renderConnection = RunService.RenderStepped:Connect(function()
 	FOVring.Position = Camera.ViewportSize / 2
 	
 	local closest = getClosestPlayerInFOV("Head")
@@ -241,3 +318,4 @@ RunService.RenderStepped:Connect(function()
 		FOVring.Transparency = 0.1
 	end
 end)
+
